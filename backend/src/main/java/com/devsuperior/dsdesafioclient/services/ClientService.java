@@ -1,7 +1,7 @@
 package com.devsuperior.dsdesafioclient.services;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.devsuperior.dsdesafioclient.dto.ClientDTO;
 import com.devsuperior.dsdesafioclient.entities.Client;
 import com.devsuperior.dsdesafioclient.repositories.ClientRepository;
+import com.devsuperior.dsdesafioclient.services.exceptions.EntityNotFoundException;
 
 @Service
 public class ClientService {
@@ -21,8 +22,13 @@ public class ClientService {
 	@Transactional(readOnly = true)
 	public List<ClientDTO> findAll(){
 		List<Client> list = repository.findAll();
-
-		List<ClientDTO> listDto = new ArrayList<>();
 		return list.stream().map(cli -> new ClientDTO(cli)).collect(Collectors.toList());
+	}
+
+	@Transactional(readOnly = true)
+	public ClientDTO findById(Long id) {
+		Optional<Client> obj = repository.findById(id);
+		Client entity = obj.orElseThrow(() -> new EntityNotFoundException("Entity not found"));
+		return new ClientDTO(entity);
 	}
 }

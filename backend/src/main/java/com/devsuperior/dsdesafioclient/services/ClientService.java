@@ -1,18 +1,21 @@
 package com.devsuperior.dsdesafioclient.services;
 
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import javax.persistence.EntityNotFoundException;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.devsuperior.dsdesafioclient.dto.ClientDTO;
 import com.devsuperior.dsdesafioclient.entities.Client;
 import com.devsuperior.dsdesafioclient.repositories.ClientRepository;
+import com.devsuperior.dsdesafioclient.services.exceptions.DatabaseException;
 import com.devsuperior.dsdesafioclient.services.exceptions.ResourceNotFoundException;
 
 @Service
@@ -22,9 +25,9 @@ public class ClientService {
 	private ClientRepository repository;
 
 	@Transactional(readOnly = true)
-	public List<ClientDTO> findAll() {
-		List<Client> list = repository.findAll();
-		return list.stream().map(cli -> new ClientDTO(cli)).collect(Collectors.toList());
+	public Page<ClientDTO> findAllPaged(PageRequest pageRequest) {
+		Page<Client> list = repository.findAll(pageRequest);
+		return list.map(cli -> new ClientDTO(cli));
 	}
 
 	@Transactional(readOnly = true)
@@ -59,6 +62,17 @@ public class ClientService {
 			return new ClientDTO(entity);
 		} catch (EntityNotFoundException e) {
 			throw new ResourceNotFoundException("Id not found" + id);
+		}
+	}
+
+	public void delete(Long id) {
+		try {
+			repository.deleteById(id);
+		} catch (EmptyResultDataAccessException e) {
+			throw new ResourceNotFoundException("Id not found" + id);
+		}
+		catch (DataIntegrityViolationException e) {
+			throw new DatabaseException("Integrity violation");
 		}
 	}
 }
